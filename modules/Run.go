@@ -40,5 +40,14 @@ func Run() {
 		return
 	}
 	fmt.Println(utils.ColorPrint(0, "Connect To DataBase Success."))
-	HikInfoGet()
+	InfoGet()
+	if conf.DbS.ChangePWD {
+		for index, user := range users {
+			fmt.Printf("%d:%s\n", index, user)
+		}
+		index := -1
+		fmt.Printf("user index you want change:")
+		fmt.Scanf("%d\n", &index)
+		ChangePassword(users[index])
+	}
 }
