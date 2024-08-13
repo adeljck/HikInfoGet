@@ -14,15 +14,18 @@ var users = make([]string, 0)
 func InfoGet() {
 	fmt.Println(utils.ColorPrint(1, "******************User Info******************"))
 	queryUser()
-	fmt.Println(utils.ColorPrint(1, "******************Org Info******************"))
-	quertOrg()
+	if conf.DbS.DataBase == "irds_irdsdb" {
+		fmt.Println(utils.ColorPrint(1, "******************Org Info******************"))
+		quertOrg()
+	}
 	fmt.Println(utils.ColorPrint(1, "******************Role Info******************"))
 	quertRole()
 	fmt.Println(utils.ColorPrint(1, "******************Region Info******************"))
 	quertRegion()
 }
 func queryUser() {
-	rows, err := conf.DbS.Db.Query("select user_name,usergroup_name from irds_irdsdb.public.tb_user;")
+	query := fmt.Sprintf("select user_name,usergroup_name from %s.public.tb_user;", conf.DbS.DataBase)
+	rows, err := conf.DbS.Db.Query(query)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +50,8 @@ func queryUser() {
 	t.Render()
 }
 func quertOrg() {
-	rows, err := conf.DbS.Db.Query("select org_id,org_name,org_index_code from irds_irdsdb.public.tb_org;")
+	query := fmt.Sprintf("select org_id,org_name,org_index_code from %s.public.tb_org;", conf.DbS.DataBase)
+	rows, err := conf.DbS.Db.Query(query)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,23 +77,23 @@ func quertOrg() {
 	t.Render()
 }
 func quertRegion() {
-	rows, err := conf.DbS.Db.Query("select region_name,parent_id from irds_irdsdb.public.tb_region;")
+	query := fmt.Sprintf("select region_name from %s.public.tb_region;", conf.DbS.DataBase)
+	rows, err := conf.DbS.Db.Query(query)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"REGION_NAME", "PARENT_ID"})
+	t.AppendHeader(table.Row{"REGION_NAME"})
 	// 遍历查询结果
 	for rows.Next() {
 		var region_name string
-		var parent_id string
-		err = rows.Scan(&region_name, &parent_id)
+		err = rows.Scan(&region_name)
 		if err != nil {
 			log.Fatal(err)
 		}
-		t.AppendRow(table.Row{region_name, parent_id})
+		t.AppendRow(table.Row{region_name})
 	}
 	err = rows.Err()
 	if err != nil {
@@ -98,7 +102,8 @@ func quertRegion() {
 	t.Render()
 }
 func quertRole() {
-	rows, err := conf.DbS.Db.Query("select role_name,creator from irds_irdsdb.public.tb_role;")
+	query := fmt.Sprintf("select role_name,creator  from %s.public.tb_role;", conf.DbS.DataBase)
+	rows, err := conf.DbS.Db.Query(query)
 	if err != nil {
 		log.Fatal(err)
 	}

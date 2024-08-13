@@ -2,16 +2,17 @@ package conf
 
 import (
 	"DBTools/utils"
+	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/magiconair/properties"
+	"os"
 	"reflect"
 )
 
 var (
-	DbType = []string{"mssql", "oracle", "postgres"}
-	DbS    DbConf
+	DbS DbConf
 )
 
 type DbConf struct {
@@ -24,10 +25,19 @@ type DbConf struct {
 	IsDBA      bool
 	ChangePWD  bool
 	Db         *sqlx.DB
+	DataBase   string
 }
 
 func (D *DbConf) CreateConnection() error {
-	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%d/irds_irdsdb?sslmode=disable", D.Username, D.Password, D.Hostname, D.Port)
+	if exists, err := D.dataBaseExists("irds_irdsdb"); err == nil && exists {
+		D.DataBase = "irds_irdsdb"
+	} else if exists, err := D.dataBaseExists("isupm_upmdb"); err == nil && exists {
+		D.DataBase = "isupm_upmdb"
+	} else {
+		fmt.Println(utils.ColorPrint(-1, "Not Support"))
+		os.Exit(0)
+	}
+	connectionString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", D.Username, D.Password, D.Hostname, D.Port, D.DataBase)
 	db, err := sqlx.Open("postgres", connectionString)
 	if err != nil {
 		return err
@@ -40,6 +50,20 @@ func (D *DbConf) CreateConnection() error {
 	D.IsDba()
 	D.ShowDbDetail()
 	return nil
+}
+func (D *DbConf) dataBaseExists(dbName string) (bool, error) {
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/?sslmode=disable", D.Username, D.Password, D.Hostname, D.Port)
+	db, err := sql.Open("postgres", dsn)
+	defer db.Close()
+	if err != nil {
+		return false, err
+	}
+	var exists bool
+	err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)", dbName).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 func (D *DbConf) GetVersion() {
 	Version := ""

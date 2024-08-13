@@ -5,6 +5,7 @@ import (
 	"DBTools/utils"
 	"flag"
 	"fmt"
+	"os"
 )
 
 func Run() {
@@ -40,8 +41,9 @@ func Run() {
 		return
 	}
 	fmt.Println(utils.ColorPrint(0, "Connect To DataBase Success."))
+
 	InfoGet()
-	if conf.DbS.ChangePWD {
+	if conf.DbS.ChangePWD && conf.DbS.DataBase == "irds_irdsdb" {
 		for index, user := range users {
 			fmt.Printf("%d:%s\n", index, user)
 		}
@@ -49,5 +51,8 @@ func Run() {
 		fmt.Printf("user index you want change:")
 		fmt.Scanf("%d\n", &index)
 		ChangePassword(users[index])
+	} else {
+		fmt.Println(utils.ColorPrint(-1, "Change PWD Not Support This Version."))
+		os.Exit(0)
 	}
 }
